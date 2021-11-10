@@ -1,5 +1,6 @@
 'use strict';
 // catController
+const {validationResult} = require('express-validator');
 const catModel = require('../models/catModel');
 const {httpError} = require('../utils/errors');
 
@@ -37,6 +38,19 @@ const cat_get = async (req, res, next) => {
 
 const cat_post = async (req, res, next) => {
   console.log('lomakkeesta', req.body, req.file);
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log('cat_post validatifg: ', errors.array())
+    next(httpError('invalid data', 400));
+    return;
+  }
+  if (!req.file) {
+    const err = httpError('file ei ok', 400)
+    next(err);
+    return;
+  }
+
   try {
     const { name, weight, owner, birthdate } = req.body;
     const tulos = await addCat(

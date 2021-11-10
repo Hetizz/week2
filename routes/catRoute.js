@@ -2,17 +2,35 @@
 // catRoute
 const express = require('express');
 const multer  = require('multer');
-const upload = multer({dest: './uploads/'});
+const fileFilter = (req, file, cb) => {
+  if(file.mimetype.includes('image')) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+}
+const upload = multer({dest: './uploads/', fileFilter});
 const router = express.Router();
+const {body} = require('express-validator');
 const { cat_list_get, cat_get, cat_post, cat_put, cat_delete} = require('../controllers/catController');
 
 router.get('/', cat_list_get);
 
 router.get('/:id', cat_get);
 
-router.post('/', upload.single('cat'), cat_post);
+router.post('/', upload.single('cat'),
+    body('name').notEmpty().escape(),
+    body('birthdate').isDate(),
+    body('weight').isNumeric(),
+    body('owner').isNumeric(),
+    cat_post);
 
-router.put('/', cat_put);
+router.put('/',
+    body('name').notEmpty().escape(),
+    body('birthdate').isDate(),
+    body('weight').isNumeric(),
+    body('owner').isNumeric(),
+    cat_put);
 
 router.delete('/:id', cat_delete);
 
