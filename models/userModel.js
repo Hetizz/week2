@@ -1,24 +1,46 @@
 'use strict';
-const users = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@metropolia.fi',
-    password: '1234',
-  },
-  {
-    id: '2',
-    name: 'Jane Doez',
-    email: 'jane@metropolia.fi',
-    password: 'qwer',
-  },
-];
+const pool = require('../database/db');
+const promisePool = pool.promise();
+const {httpError} = require('../utils/errors')
 
-const getUser = (id) => {
-  return users.find((user) => user.id === id);
-}
+const getAllUsers = async (next) => {
+  try {
+    const [userList] = await promisePool.execute('SELECT user_id, name, email, role FROM wop_user');
+    return userList;
+  } catch (e) {
+    console.error('error', e.message);
+    next(httpError('user ERROR'));
+  }
+};
+
+const getUser = async (id, next) => {
+  try {
+    const [rows] = await promisePool.execute(
+        'SELECT user_id, name, email, role FROM wop_user WHERE user_id = ?', [id]
+    );
+    //console.log('haun tulos', rows);
+    return rows;
+  } catch (e) {
+    console.error('user error', e.message);
+    next(httpError('user1ERROR'));
+  }
+};
+
+const addUser = async (name, email, password, next) => {
+  try {
+    const [rows] = await promisePool.execute(
+        'INSERT INTO wop_user (name, email, password) VALUES (?, ?, ?)', [name, email, password]
+    );
+    return rows;
+  } catch (e) {
+    console.error('adduser error', e.message);
+    next(httpError('adduserERROR'));
+  }
+};
+
 
 module.exports = {
-  users,
+  getAllUsers,
   getUser,
+  addUser,
 };
