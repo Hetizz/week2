@@ -22,14 +22,12 @@ router.post('/', upload.single('cat'),
     body('name').notEmpty().escape(),
     body('birthdate').isDate(),
     body('weight').isNumeric(),
-    body('owner').isNumeric(),
     cat_post);
 
-router.put('/',
+router.put('/:id',
     body('name').notEmpty().escape(),
     body('birthdate').isDate(),
     body('weight').isNumeric(),
-    body('owner').isNumeric(),
     cat_put);
 
 router.delete('/:id', cat_delete);

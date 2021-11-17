@@ -37,7 +37,7 @@ const cat_get = async (req, res, next) => {
 };
 
 const cat_post = async (req, res, next) => {
-  console.log('lomakkeesta', req.body, req.file);
+  console.log('lomakkeesta', req.body, req.file, req.user);
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -52,11 +52,11 @@ const cat_post = async (req, res, next) => {
   }
 
   try {
-    const { name, weight, owner, birthdate } = req.body;
+    const { name, weight, birthdate } = req.body;
     const tulos = await addCat(
         name,
         weight,
-        owner,
+        req.user.user_id,
         req.file.filename,
         birthdate,
         next
@@ -79,8 +79,13 @@ const cat_post = async (req, res, next) => {
 const cat_put = async (req, res, next) => {
   console.log('cat_put', req.body);
   try {
-    const { name, birthdate, weight, owner, id } = req.body;
-    const tulos = await modifyCat(name, weight, owner, birthdate, id, next);
+    const { name, birthdate, weight } = req.body;
+    let owner = req.user.user_id;
+    if (req.user.role === 0) {
+      owner = req.body.owner;
+    }
+
+    const tulos = await modifyCat(name, weight, owner, birthdate, req.params.id, req.user.role, next);
     if (tulos.affectedRows > 0) {
       res.json({
         message: 'cat modified',
@@ -98,7 +103,7 @@ const cat_put = async (req, res, next) => {
 const cat_delete = async (req, res, next) => {
   //lähetä yksi kissa
   try {
-    const vastaus = await deleteCat(req.params.id, next);
+    const vastaus = await deleteCat(req.params.id, req.user.user_id, req.user.role, next);
     if (tulos.affectedRows > 0) {
       res.json({
         message: 'cat delete',
