@@ -260,8 +260,10 @@ $RECYCLE.BIN/
 
 # ignore content of uploads folder
 uploads/*
+tumbnails/*
 # except one (empty) file to have the folder in version control
 !uploads/.gitkeep
+!tumbnails/.gitkeep
 
 .env
 

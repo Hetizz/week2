@@ -14,7 +14,7 @@ const user_list_get = async (req, res, next) => {
     }
   } catch (e) {
     console.log('user_list_get error', e.message);
-    next(httpError('internal sererrtg errer', 500));
+    next(httpError('internal server error', 500));
   }
 };
 
@@ -29,36 +29,9 @@ const user_get = async (req, res, next) => {
     }
   } catch (e) {
     console.log('user_get error', e.message);
-    next(httpError('internal sererrtg eroor',500));
+    next(httpError('internal server error',500));
   }
 
-};
-
-const user_post = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    console.log('user_post validatifg: ', errors.array())
-    next(httpError('invalid data', 400));
-    return;
-  }
-
-  try {
-    console.log('lomakkeesta', req.body);
-    const {name, email, passwd} = req.body;
-    const tulos = await addUser(name, email, passwd, next);
-    if (tulos.affectedRows > 0) {
-      res.json({
-        message: 'user added',
-        user_id: tulos.insertId,
-      });
-    } else {
-      next(httpError('NO USER', 400))
-    }
-    res.send('With this endpoint you can add users.');
-  } catch (e) {
-    console.log('user_post error', e.message);
-    next(httpError('internal sererrtg eroor',500));
-  }
 };
 
 const checkToken = (req, res, next) => {
@@ -73,6 +46,5 @@ const checkToken = (req, res, next) => {
 module.exports = {
   user_list_get,
   user_get,
-  user_post,
   checkToken,
 }

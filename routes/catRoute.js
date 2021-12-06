@@ -1,6 +1,7 @@
 'use strict';
 // catRoute
 const express = require('express');
+const {body} = require('express-validator');
 const multer  = require('multer');
 const fileFilter = (req, file, cb) => {
   if(file.mimetype.includes('image')) {
@@ -11,33 +12,28 @@ const fileFilter = (req, file, cb) => {
 }
 const upload = multer({dest: './uploads/', fileFilter});
 const router = express.Router();
-const {body} = require('express-validator');
 const { cat_list_get, cat_get, cat_post, cat_put, cat_delete} = require('../controllers/catController');
 
-router.get('/', cat_list_get);
-
-router.get('/:id', cat_get);
-
-router.post('/', upload.single('cat'),
+router
+.route('/')
+.get(cat_list_get)
+.post(
+    upload.single('cat'),
     body('name').notEmpty().escape(),
     body('birthdate').isDate(),
     body('weight').isNumeric(),
-    cat_post);
+    cat_post
+);
 
-router.put('/:id',
+router
+.route('/:id')
+.get(cat_get)
+.delete(cat_delete)
+.put(
     body('name').notEmpty().escape(),
     body('birthdate').isDate(),
     body('weight').isNumeric(),
-    cat_put);
-
-router.delete('/:id', cat_delete);
-
-router.put('/', (req, res) => {
-  res.send('With this endpoint you can edit cats.');
-});
-
-router.delete('/', (req, res) => {
-  res.send('With this endpoint you can delete cats.');
-});
+    cat_put
+);
 
 module.exports = router;

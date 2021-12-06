@@ -6,9 +6,8 @@ const promisePool = pool.promise();
 const getAllCats = async (next) => {
   try {
     // TODO: do the LEFT (or INNER) JOIN to get owner's name as ownername (from wop_user table).
-    const [rows] = await promisePool.execute('SELECT cat_id, wop_cat.name, weight, wop_cat.owner, filename, birthdate, wop_user.name as ownername FROM wop_cat\n' +
+    const [rows] = await promisePool.execute('SELECT cat_id, wop_cat.name, weight, wop_cat.owner, filename, coords, birthdate, wop_user.name as ownername FROM wop_cat\n' +
         '    JOIN wop_user ON wop_cat.owner = wop_user.user_id');
-    //console.log('haun tulos', rows);
     return rows;
   } catch (e) {
     console.error('getAllCats error', e.message);
@@ -19,7 +18,7 @@ const getAllCats = async (next) => {
 const getCat = async (id, next) => {
   try {
     const [rows] = await promisePool.execute(
-        'SELECT cat_id, wop_cat.name, weight, wop_cat.owner, filename, birthdate, wop_user.name as ownername FROM wop_cat\n' +
+        'SELECT cat_id, wop_cat.name, weight, wop_cat.owner, filename, coords, birthdate, wop_user.name as ownername FROM wop_cat\n' +
         '    JOIN wop_user ON wop_cat.owner = wop_user.user_id WHERE cat_id = ?', [id]
     );
     console.log('haun tulos', rows);
@@ -30,16 +29,16 @@ const getCat = async (id, next) => {
   }
 };
 
-const addCat = async (name, weight, owner, filename, birthdate, next) => {
+const addCat = async (name, weight, owner, filename, birthdate, coords, next) => {
   try {
     const [rows] = await promisePool.execute(
-        'INSERT INTO wop_cat (name, weight, owner, filename, birthdate) VALUES (?, ?, ?, ?, ?)',
-        [name, weight, owner, filename, birthdate]
+        'INSERT INTO wop_cat (name, weight, owner, filename, birthdate, coords) VALUES (?, ?, ?, ?, ?, ?)',
+        [name, weight, owner, filename, birthdate, coords]
     );
     return rows;
   } catch (e) {
     console.error('addcat error', e.message);
-    next(httpError('addcatERROR', 500));
+    next(httpError('Database error', 500));
   }
 };
 

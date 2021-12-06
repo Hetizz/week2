@@ -3,6 +3,8 @@
 const {validationResult} = require('express-validator');
 const catModel = require('../models/catModel');
 const {httpError} = require('../utils/errors');
+const { getCoordinates } = require('../utils/imageMeta');
+const {makeThumbnail} = require('../utils/resize')
 
 //const cats = catModel.cats;
 const {getAllCats, getCat, addCat, modifyCat, deleteCat} = catModel;
@@ -17,7 +19,7 @@ const cat_list_get = async (req, res, next) => {
     }
   } catch (e) {
    console.log('cat_list_get error', e.message);
-   next(httpError('internal sererrtg errer'), 500);
+   next(httpError('internal server error'), 500);
   }
 };
 
@@ -32,13 +34,12 @@ const cat_get = async (req, res, next) => {
     }
   } catch (e) {
     console.log('cat_get error', e.message);
-    next(httpError('internal sererrtg eroor'), 500);
+    next(httpError('internal server error'), 500);
   }
 };
 
 const cat_post = async (req, res, next) => {
-  console.log('lomakkeesta', req.body, req.file, req.user);
-
+  console.log('cat_post', req.body, req.file, req.user);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     console.log('cat_post validatifg: ', errors.array())
@@ -52,38 +53,61 @@ const cat_post = async (req, res, next) => {
   }
 
   try {
-    const { name, weight, birthdate } = req.body;
+    const coords = await getCoordinates(req.file.path);
+    req.body.coords = coords;
+  } catch (e) {
+    req.body.coords = [24.74, 60.24];
+  }
+
+  try {
+    const thumb = makeThumbnail(
+        req.file.path,
+        './thumbnails/' + req.file.filename
+    );
+
+    const { name, weight, birthdate, coords } = req.body;
     const tulos = await addCat(
         name,
         weight,
         req.user.user_id,
         req.file.filename,
         birthdate,
+        JSON.stringify(coords),
         next
     );
-    if (tulos.affectedRows > 0) {
-      res.json({
-        message: 'cat added',
-        cat_id: tulos.insertId,
-      });
-    } else {
-      next(httpError('NO CAT ADDED', 400));
+    if (thumb) {
+      if (tulos.affectedRows > 0) {
+        res.json({
+          message: 'cat added',
+          cat_id: tulos.insertId,
+        });
+      } else {
+        next(httpError('NO CAT ADDED', 400));
+      }
     }
   } catch (e) {
     console.log('user_post error', e.message);
-    next(httpError('internal sererrtg eroor', 500));
+    next(httpError('internal server error', 500));
   }
 
 };
 
 const cat_put = async (req, res, next) => {
-  console.log('cat_put', req.body);
+  console.log('cat_put', req.body, req.params);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log('cat_put validation', errors.array());
+    next(httpError('invalid data', 400));
+    return;
+  }
   try {
     const { name, birthdate, weight } = req.body;
-    let owner = req.user.user_id;
+    /*let owner = req.user.user_id;
     if (req.user.role === 0) {
       owner = req.body.owner;
-    }
+    }*/
+
+    const owner = req.user.role === 0 ? req.body.owner : req.user.user_id;
 
     const tulos = await modifyCat(name, weight, owner, birthdate, req.params.id, req.user.role, next);
     if (tulos.affectedRows > 0) {
@@ -101,20 +125,19 @@ const cat_put = async (req, res, next) => {
 };
 
 const cat_delete = async (req, res, next) => {
-  //lähetä yksi kissa
   try {
     const vastaus = await deleteCat(req.params.id, req.user.user_id, req.user.role, next);
-    if (tulos.affectedRows > 0) {
+    if (vastaus.affectedRows > 0) {
       res.json({
-        message: 'cat delete',
-        cat_id: tulos.insertId,
+        message: 'cat deleted',
+        cat_id: vastaus.insertId,
       });
     } else {
-      next(httpError('ei löydy kissaa :(', 404));
+      next(httpError('No cat found', 404));
     }
   } catch (e) {
     console.log('cat_delete error', e.message);
-    next(httpError('internal sererrtg eroor'), 500);
+    next(httpError('internal server error', 500));
   }
 };
 
